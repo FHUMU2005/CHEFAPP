@@ -89,6 +89,11 @@ YouTube Link:https://www.youtube.com/watch?v=hLHsDBgIMMw&t=9s
 <img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/6b5773b3-b2e4-439d-acd1-f03612d98b76" />
 <img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/6928c386-e210-4130-9e5f-4db34d3cb377" />
 <img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/54022fce-b1c6-49b5-b219-ab4c49215ac4" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/2d84d605-9998-4f6e-a507-5d1fd91f2f98" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/5018167e-07c0-4486-a440-7cd3f76519e6" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/ebbd77e0-e39f-4d79-966a-05da11ce7d41" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/d5fb87df-16e8-4690-80d7-e500795be144" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/86e364b1-20dc-4bdc-9e4f-4045653f1e1d" />
 
 <img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/b15e6df1-8152-4e21-acaa-038c67fed254" />
 
