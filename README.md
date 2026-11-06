@@ -85,17 +85,18 @@ The updated Chef's Kitchen application introduces significant improvements compa
 
 GitHub Link:https://github.com/FHUMU2005/CHEFAPP
 YouTube Link:https://www.youtube.com/watch?v=hLHsDBgIMMw&t=9s
-<img width="1909" height="909" alt="Screenshot 2026-11-06 133307" src="https://github.com/user-attachments/assets/27dadec7-cbe4-4145-86b6-59950a6a5eff" />
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/6b5773b3-b2e4-439d-acd1-f03612d98b76" />
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/6928c386-e210-4130-9e5f-4db34d3cb377" />
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/54022fce-b1c6-49b5-b219-ab4c49215ac4" />
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/2d84d605-9998-4f6e-a507-5d1fd91f2f98" />
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/5018167e-07c0-4486-a440-7cd3f76519e6" />
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/ebbd77e0-e39f-4d79-966a-05da11ce7d41" />
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/d5fb87df-16e8-4690-80d7-e500795be144" />
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/86e364b1-20dc-4bdc-9e4f-4045653f1e1d" />
+<img width="1897" height="911" alt="Screenshot 2026-11-06 132957" src="https://github.com/user-attachments/assets/86ee6497-a890-4248-8a73-4522cc4bfa70" />
+<img width="1903" height="914" alt="Screenshot 2026-11-06 133026" src="https://github.com/user-attachments/assets/5ba46a14-64cf-46b9-b5a6-a9f19b9d0e20" />
+<img width="1904" height="882" alt="Screenshot 2026-11-06 133049" src="https://github.com/user-attachments/assets/aa1b5df9-83b8-4ef1-9f1b-01ead06744d7" />
+<img width="1868" height="800" alt="Screenshot 2026-11-06 133202" src="https://github.com/user-attachments/assets/743634e6-d10a-466b-bbd3-7c150b1ce4ac" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/14926ab4-5e1f-4851-b87f-3261ed06dd2e" />
+<img width="1909" height="909" alt="Screenshot 2026-11-06 133307" src="https://github.com/user-attachments/assets/ccea373c-a280-4488-99a1-647aee998a2a" />
+<img width="1899" height="833" alt="Screenshot 2026-11-06 133510" src="https://github.com/user-attachments/assets/df8af798-3b5f-48f3-bb15-e4bec1138a2e" />
 
-<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/b15e6df1-8152-4e21-acaa-038c67fed254" />
+
+
+
+
 
 
 
