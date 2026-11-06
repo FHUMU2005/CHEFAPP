@@ -86,5 +86,11 @@ The updated Chef's Kitchen application introduces significant improvements compa
 GitHub Link:https://github.com/FHUMU2005/CHEFAPP
 YouTube Link:https://www.youtube.com/watch?v=hLHsDBgIMMw&t=9s
 <img width="1909" height="909" alt="Screenshot 2026-11-06 133307" src="https://github.com/user-attachments/assets/27dadec7-cbe4-4145-86b6-59950a6a5eff" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/6b5773b3-b2e4-439d-acd1-f03612d98b76" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/6928c386-e210-4130-9e5f-4db34d3cb377" />
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/54022fce-b1c6-49b5-b219-ab4c49215ac4" />
+
+<img width="1883" height="799" alt="Screenshot 2026-11-06 133238" src="https://github.com/user-attachments/assets/b15e6df1-8152-4e21-acaa-038c67fed254" />
+
 
 
