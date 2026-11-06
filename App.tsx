@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -14,39 +15,15 @@ import {
   View,
 } from "react-native";
 
-/*
-  ============================================================
-  CHEF APP
-  React Native + TypeScript
-  ============================================================
-
-  Screens:
-    splash
-    login
-    menu
-    dishForm
-    starters
-    mains
-    dessert
-    checkout
-    thankyou
-*/
-
-type Screen =
-  | "splash"
-  | "login"
-  | "menu"
-  | "dishForm"
-  | "starters"
-  | "mains"
-  | "dessert"
-  | "checkout"
-  | "thankyou";
+type Course = "Starter" | "Mains" | "Dessert";
+type Filter = "All" | Course;
+type Screen = "splash" | "login" | "menu" | "dishForm" | "checkout" | "thankyou";
 
 type Dish = {
   id: number;
   name: string;
   description: string;
+  course: Course;
   price: number;
   image: string;
 };
@@ -59,21 +36,18 @@ const COLORS = {
   green: "#25C94B",
   white: "#FFFFFF",
   black: "#111111",
-  lightGray: "#EEEEEE",
+  light: "#FFF4F4",
+  gray: "#777777",
+  border: "#E8B6B6",
 };
 
-// Food images.
-// You can eventually replace these URLs with local images in /assets.
 const FOOD_IMAGES = {
   starters:
     "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=700&q=80",
-
   mains:
     "https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=700&q=80",
-
   dessert:
     "https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=700&q=80",
-
   chef:
     "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=600&q=80",
 };
@@ -83,42 +57,58 @@ const DEFAULT_DISHES: Dish[] = [
     id: 1,
     name: "Special Starter",
     description: "Freshly prepared chef's starter.",
-    price: 12.5,
+    course: "Starter",
+    price: 125.5,
     image: FOOD_IMAGES.starters,
   },
   {
     id: 2,
     name: "Chicken Special",
     description: "Grilled chicken served with vegetables.",
-    price: 18.99,
+    course: "Mains",
+    price: 189.99,
     image: FOOD_IMAGES.mains,
   },
   {
     id: 3,
     name: "Chef's Dessert",
     description: "Sweet dessert prepared by our chef.",
-    price: 8.5,
+    course: "Dessert",
+    price: 85.5,
     image: FOOD_IMAGES.dessert,
   },
 ];
+
+const money = (amount: number) =>
+  `R ${amount.toLocaleString("en-ZA", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const imageForCourse = (course: Course) => {
+  if (course === "Starter") return FOOD_IMAGES.starters;
+  if (course === "Mains") return FOOD_IMAGES.mains;
+  return FOOD_IMAGES.dessert;
+};
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("splash");
 
   const [dishes, setDishes] = useState<Dish[]>(DEFAULT_DISHES);
+  const [order, setOrder] = useState<number[]>([]);
 
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<Filter>("All");
+
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [dishName, setDishName] = useState("");
   const [description, setDescription] = useState("");
-  const [course, setCourse] = useState("");
+  const [course, setCourse] = useState<Course>("Starter");
   const [price, setPrice] = useState("");
 
-  /*
-    ------------------------------------------------------------
-    SPLASH SCREEN
-    ------------------------------------------------------------
-    The splash screen remains visible for approximately 3 seconds.
-  */
+  const [username, setUsername] = useState("");
 
+  // SPLASH SCREEN: 3 SECONDS
   useEffect(() => {
     const timer = setTimeout(() => {
       setScreen("login");
@@ -127,824 +117,688 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  /*
-    ------------------------------------------------------------
-    CREATE NEW DISH
-    ------------------------------------------------------------
-  */
+  // SEARCH AND FILTER
+  const filteredDishes = useMemo(() => {
+    const term = search.trim().toLowerCase();
 
-  const createDish = () => {
-    if (!dishName || !description || !course || !price) {
-      Alert.alert(
-        "Missing information",
-        "Please complete all of the dish fields."
-      );
+    return dishes.filter((dish) => {
+      const matchesCourse =
+        filter === "All" || dish.course === filter;
+
+      const matchesSearch =
+        dish.name.toLowerCase().includes(term) ||
+        dish.description.toLowerCase().includes(term);
+
+      return matchesCourse && matchesSearch;
+    });
+  }, [dishes, filter, search]);
+
+  // MENU STATISTICS
+  const totalItems = dishes.length;
+
+  const totalMenuPrice = dishes.reduce(
+    (sum, dish) => sum + dish.price,
+    0
+  );
+
+  const averagePrice =
+    totalItems > 0 ? totalMenuPrice / totalItems : 0;
+
+  // CHECKOUT INFORMATION
+  const orderedDishes = order
+    .map((id) => dishes.find((dish) => dish.id === id))
+    .filter((dish): dish is Dish => Boolean(dish));
+
+  const orderTotal = orderedDishes.reduce(
+    (sum, dish) => sum + dish.price,
+    0
+  );
+
+  // LOGIN
+  const handleLogin = () => {
+    if (!username.trim()) {
+      Alert.alert("Login", "Please enter your name.");
       return;
     }
 
-    const newDish: Dish = {
-      id: Date.now(),
-      name: dishName,
-      description,
-      price: Number(price),
-      image:
-        course.toLowerCase() === "starter"
-          ? FOOD_IMAGES.starters
-          : course.toLowerCase() === "mains"
-          ? FOOD_IMAGES.mains
-          : FOOD_IMAGES.dessert,
-    };
-
-    setDishes([...dishes, newDish]);
-
-    setDishName("");
-    setDescription("");
-    setCourse("");
-    setPrice("");
-
-    Alert.alert("Dish Created", `${newDish.name} has been added.`);
-
-    if (course.toLowerCase() === "starter") {
-      setScreen("starters");
-    } else if (course.toLowerCase() === "mains") {
-      setScreen("mains");
-    } else {
-      setScreen("dessert");
-    }
-  };
-
-  /*
-    ------------------------------------------------------------
-    LOGIN
-    ------------------------------------------------------------
-  */
-
-  const handleLogin = () => {
     setScreen("menu");
   };
 
-  /*
-    ------------------------------------------------------------
-    GET DISHES BY COURSE
-    ------------------------------------------------------------
-  */
+  // OPEN ADD DISH FORM
+  const openAddForm = () => {
+    setEditingId(null);
+    setDishName("");
+    setDescription("");
+    setCourse("Starter");
+    setPrice("");
+    setScreen("dishForm");
+  };
 
-  const starterDishes = dishes.filter(
-    (dish) => dish.name.toLowerCase().includes("starter") ||
-      dish.description.toLowerCase().includes("starter")
+  // OPEN EDIT DISH FORM
+  const openEditForm = (dish: Dish) => {
+    setEditingId(dish.id);
+    setDishName(dish.name);
+    setDescription(dish.description);
+    setCourse(dish.course);
+    setPrice(dish.price.toString());
+    setScreen("dishForm");
+  };
+
+  // SAVE NEW OR EDITED DISH
+  const saveDish = () => {
+    const cleanName = dishName.trim();
+    const cleanDescription = description.trim();
+    const cleanPrice = Number(price.replace(",", "."));
+
+    if (!cleanName || !cleanDescription || !price.trim()) {
+      Alert.alert("Missing information", "Please complete all fields.");
+      return;
+    }
+
+    if (!Number.isFinite(cleanPrice) || cleanPrice <= 0) {
+      Alert.alert("Invalid price", "Enter a valid price greater than zero.");
+      return;
+    }
+
+    if (editingId !== null) {
+      setDishes((previous) =>
+        previous.map((dish) =>
+          dish.id === editingId
+            ? {
+                ...dish,
+                name: cleanName,
+                description: cleanDescription,
+                course,
+                price: cleanPrice,
+                image: imageForCourse(course),
+              }
+            : dish
+        )
+      );
+
+      Alert.alert("Success", "Dish updated successfully!");
+    } else {
+      const newDish: Dish = {
+        id: Date.now(),
+        name: cleanName,
+        description: cleanDescription,
+        course,
+        price: cleanPrice,
+        image: imageForCourse(course),
+      };
+
+      setDishes((previous) => [...previous, newDish]);
+
+      Alert.alert("Success", "New dish added successfully!");
+    }
+
+    setScreen("menu");
+  };
+
+  // REMOVE DISH
+  const removeDish = (id: number) => {
+    Alert.alert(
+      "Remove Dish",
+      "Are you sure you want to remove this dish?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            setDishes((previous) =>
+              previous.filter((dish) => dish.id !== id)
+            );
+
+            setOrder((previous) =>
+              previous.filter((itemId) => itemId !== id)
+            );
+
+            Alert.alert("Removed", "Dish removed successfully.");
+          },
+        },
+      ]
+    );
+  };
+
+  // ADD OR REMOVE DISH FROM ORDER
+  const toggleOrder = (id: number) => {
+    setOrder((previous) =>
+      previous.includes(id)
+        ? previous.filter((itemId) => itemId !== id)
+        : [...previous, id]
+    );
+  };
+
+  // PLACE ORDER
+  const placeOrder = () => {
+    if (orderedDishes.length === 0) {
+      Alert.alert("Empty order", "Please select at least one dish.");
+      return;
+    }
+
+    setScreen("thankyou");
+  };
+
+  // REUSABLE BUTTON
+  const ActionButton = ({
+    title,
+    onPress,
+    color = COLORS.red,
+  }: {
+    title: string;
+    onPress: () => void;
+    color?: string;
+  }) => (
+    <Pressable
+      style={[styles.button, { backgroundColor: color }]}
+      onPress={onPress}
+    >
+      <Text style={styles.buttonText}>{title}</Text>
+    </Pressable>
   );
 
-  const mainDishes = dishes.filter(
-    (dish) =>
-      dish.name.toLowerCase().includes("chicken") ||
-      dish.description.toLowerCase().includes("chicken") ||
-      dish.name.toLowerCase().includes("main")
-  );
-
-  const dessertDishes = dishes.filter(
-    (dish) =>
-      dish.name.toLowerCase().includes("dessert") ||
-      dish.description.toLowerCase().includes("dessert")
-  );
-
-  /*
-    ============================================================
-    SPLASH SCREEN
-    ============================================================
-  */
-
+  // SPLASH SCREEN
   if (screen === "splash") {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          backgroundColor={COLORS.red}
-          barStyle="light-content"
-        />
-
-        <View style={styles.splashContainer}>
-          <View style={styles.chefImageWrapper}>
-            <Image
-              source={{ uri: FOOD_IMAGES.chef }}
-              style={styles.chefImage}
-            />
-          </View>
-
-          <Text style={styles.appTitle}>CHEF APP</Text>
-
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
+      <SafeAreaView style={styles.splash}>
+        <StatusBar barStyle="light-content" />
+        <Image source={{ uri: FOOD_IMAGES.chef }} style={styles.chefImage} />
+        <Text style={styles.splashTitle}>CHEF'S KITCHEN</Text>
+        <Text style={styles.splashSubtitle}>
+          Delicious meals, prepared with love.
+        </Text>
+        <Text style={styles.loading}>Loading...</Text>
       </SafeAreaView>
     );
   }
 
-  /*
-    ============================================================
-    LOGIN SCREEN
-    ============================================================
-  */
-
+  // LOGIN SCREEN
   if (screen === "login") {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar
-          backgroundColor={COLORS.red}
-          barStyle="light-content"
-        />
-
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginTitle}>CHEF APP</Text>
-
-          <Text style={styles.loginSubtitle}>
-            Welcome back, Chef
+        <StatusBar backgroundColor={COLORS.red} barStyle="light-content" />
+        <KeyboardAvoidingView
+          style={styles.center}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <Image source={{ uri: FOOD_IMAGES.chef }} style={styles.loginImage} />
+          <Text style={styles.heading}>Welcome to Chef's Kitchen</Text>
+          <Text style={styles.subtitle}>
+            Please enter your name to continue.
           </Text>
 
-          <Pressable
-            style={[styles.button, styles.yellowButton]}
-            onPress={handleLogin}
-          >
-            <Text style={styles.buttonText}>SIGN IN</Text>
-          </Pressable>
-
-          <View style={styles.emptySpace} />
-
-          <Pressable
-            style={[styles.button, styles.blueButton]}
-            onPress={handleLogin}
-          >
-            <Text style={styles.buttonText}>LOG IN</Text>
-          </Pressable>
-
-          <NextButton
-            onPress={() => setScreen("menu")}
-            label="NEXT"
-          />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  /*
-    ============================================================
-    MENU / COURSE SELECTION
-    ============================================================
-  */
-
-  if (screen === "menu") {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          backgroundColor={COLORS.red}
-          barStyle="light-content"
-        />
-
-        <ScrollView contentContainerStyle={styles.menuContainer}>
-          <MenuCourse
-            image={FOOD_IMAGES.starters}
-            title="STARTERS"
-            color={COLORS.turquoise}
-            onPress={() => setScreen("starters")}
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your name"
+            value={username}
+            onChangeText={setUsername}
           />
 
-          <MenuCourse
-            image={FOOD_IMAGES.mains}
-            title="MAINS"
-            color={COLORS.blue}
-            onPress={() => setScreen("mains")}
-          />
-
-          <MenuCourse
-            image={FOOD_IMAGES.dessert}
-            title="DESSERT"
-            color={COLORS.green}
-            onPress={() => setScreen("dessert")}
-          />
-
-          <Pressable
-            style={styles.createDishButton}
-            onPress={() => setScreen("dishForm")}
-          >
-            <Text style={styles.buttonText}>CREATE NEW DISH</Text>
-          </Pressable>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  /*
-    ============================================================
-    DISH FORM
-    ============================================================
-  */
-
-  if (screen === "dishForm") {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          backgroundColor={COLORS.red}
-          barStyle="light-content"
-        />
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={{ flex: 1 }}
-        >
-          <ScrollView contentContainerStyle={styles.formContainer}>
-            <Text style={styles.formTitle}>DISH NAME</Text>
-
-            <TextInput
-              value={dishName}
-              onChangeText={setDishName}
-              placeholder="Enter dish name"
-              placeholderTextColor="#777"
-              style={styles.input}
-            />
-
-            <Text style={styles.formTitle}>DESCRIPTION</Text>
-
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Enter description"
-              placeholderTextColor="#777"
-              multiline
-              style={[styles.input, styles.descriptionInput]}
-            />
-
-            <Text style={styles.formTitle}>SELECT THE COURSE</Text>
-
-            <View style={styles.courseOptions}>
-              <CourseOption
-                title="STARTER"
-                selected={course === "Starter"}
-                color={COLORS.turquoise}
-                onPress={() => setCourse("Starter")}
-              />
-
-              <CourseOption
-                title="MAINS"
-                selected={course === "Mains"}
-                color={COLORS.blue}
-                onPress={() => setCourse("Mains")}
-              />
-
-              <CourseOption
-                title="DESSERT"
-                selected={course === "Dessert"}
-                color={COLORS.green}
-                onPress={() => setCourse("Dessert")}
-              />
-            </View>
-
-            <Text style={styles.formTitle}>PRICE</Text>
-
-            <TextInput
-              value={price}
-              onChangeText={setPrice}
-              placeholder="Enter price"
-              placeholderTextColor="#777"
-              keyboardType="decimal-pad"
-              style={styles.input}
-            />
-
-            <Pressable
-              style={styles.saveButton}
-              onPress={createDish}
-            >
-              <Text style={styles.buttonText}>SAVE DISH</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.backButton}
-              onPress={() => setScreen("menu")}
-            >
-              <Text style={styles.buttonText}>BACK</Text>
-            </Pressable>
-          </ScrollView>
+          <ActionButton title="LOGIN" onPress={handleLogin} />
         </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
 
-  /*
-    ============================================================
-    STARTERS
-    ============================================================
-  */
-
-  if (screen === "starters") {
+  // ADD AND EDIT DISH SCREEN
+  if (screen === "dishForm") {
     return (
-      <DishScreen
-        title="STARTERS"
-        color={COLORS.turquoise}
-        dishes={starterDishes.length ? starterDishes : [DEFAULT_DISHES[0]]}
-        onNext={() => setScreen("mains")}
-        onBack={() => setScreen("menu")}
-      />
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor={COLORS.red} barStyle="light-content" />
+
+        <ScrollView contentContainerStyle={styles.formContainer}>
+          <Text style={styles.heading}>
+            {editingId !== null ? "Edit Dish" : "Add New Dish"}
+          </Text>
+
+          <Text style={styles.label}>Dish Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter dish name"
+            value={dishName}
+            onChangeText={setDishName}
+          />
+
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.descriptionInput]}
+            placeholder="Enter dish description"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+          />
+
+          <Text style={styles.label}>Select Course</Text>
+
+          <View style={styles.courseOptions}>
+            {(["Starter", "Mains", "Dessert"] as Course[]).map((item) => (
+              <Pressable
+                key={item}
+                onPress={() => setCourse(item)}
+                style={[
+                  styles.courseButton,
+                  course === item && styles.selectedCourse,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.courseButtonText,
+                    course === item && styles.selectedCourseText,
+                  ]}
+                >
+                  {item}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.label}>Price (R)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter price e.g. 150.00"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="decimal-pad"
+          />
+
+          <ActionButton
+            title={editingId !== null ? "UPDATE DISH" : "SAVE DISH"}
+            onPress={saveDish}
+          />
+
+          <ActionButton
+            title="CANCEL"
+            color={COLORS.gray}
+            onPress={() => setScreen("menu")}
+          />
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
-  /*
-    ============================================================
-    MAINS
-    ============================================================
-  */
-
-  if (screen === "mains") {
-    return (
-      <DishScreen
-        title="MAINS"
-        color={COLORS.blue}
-        dishes={mainDishes.length ? mainDishes : [DEFAULT_DISHES[1]]}
-        onNext={() => setScreen("dessert")}
-        onBack={() => setScreen("starters")}
-      />
-    );
-  }
-
-  /*
-    ============================================================
-    DESSERT
-    ============================================================
-  */
-
-  if (screen === "dessert") {
-    return (
-      <DishScreen
-        title="DESSERT"
-        color={COLORS.green}
-        dishes={
-          dessertDishes.length ? dessertDishes : [DEFAULT_DISHES[2]]
-        }
-        onNext={() => setScreen("checkout")}
-        onBack={() => setScreen("mains")}
-      />
-    );
-  }
-
-  /*
-    ============================================================
-    CHECKOUT
-    ============================================================
-  */
-
+  // CHECKOUT SCREEN
   if (screen === "checkout") {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar
-          backgroundColor={COLORS.red}
-          barStyle="light-content"
-        />
+        <ScrollView contentContainerStyle={styles.formContainer}>
+          <Text style={styles.heading}>Your Order</Text>
 
-        <ScrollView contentContainerStyle={styles.checkoutContainer}>
-          <Text style={styles.checkoutTitle}>YOUR ORDER</Text>
+          {orderedDishes.length === 0 ? (
+            <Text style={styles.emptyText}>Your order is empty.</Text>
+          ) : (
+            orderedDishes.map((dish) => (
+              <View key={dish.id} style={styles.checkoutItem}>
+                <Text style={styles.dishName}>{dish.name}</Text>
+                <Text style={styles.price}>{money(dish.price)}</Text>
+                <Pressable onPress={() => toggleOrder(dish.id)}>
+                  <Text style={styles.removeText}>Remove</Text>
+                </Pressable>
+              </View>
+            ))
+          )}
 
-          {dishes.slice(0, 3).map((dish) => (
-            <View style={styles.orderRow} key={dish.id}>
-              <Text style={styles.orderName}>{dish.name}</Text>
-
-              <Text style={styles.orderPrice}>
-                ${dish.price.toFixed(2)}
-              </Text>
-            </View>
-          ))}
-
-          <View style={styles.totalRow}>
-            <Text style={styles.totalText}>TOTAL</Text>
-
+          <View style={styles.totalBox}>
             <Text style={styles.totalText}>
-              $
-              {dishes
-                .slice(0, 3)
-                .reduce((total, dish) => total + dish.price, 0)
-                .toFixed(2)}
+              Total: {money(orderTotal)}
             </Text>
           </View>
 
-          <Pressable
-            style={styles.removeButton}
-            onPress={() =>
-              Alert.alert(
-                "Remove Items",
-                "Your order items would be removed here."
-              )
-            }
-          >
-            <Text style={styles.buttonText}>REMOVE ITEMS</Text>
-          </Pressable>
+          <ActionButton title="PLACE ORDER" onPress={placeOrder} />
 
-          <Text style={styles.checkoutMessage}>
-            Message
-          </Text>
-
-          <Text style={styles.checkoutProceed}>
-            PROCEED TO CHECKOUT
-          </Text>
-
-          <Pressable
-            style={styles.payButton}
-            onPress={() => setScreen("thankyou")}
-          >
-            <Text style={styles.buttonText}>
-              PAY WITH MASTER CARD
-            </Text>
-          </Pressable>
+          <ActionButton
+            title="BACK TO MENU"
+            color={COLORS.gray}
+            onPress={() => setScreen("menu")}
+          />
         </ScrollView>
       </SafeAreaView>
     );
   }
 
-  /*
-    ============================================================
-    THANK YOU SCREEN
-    ============================================================
-  */
-
+  // THANK YOU SCREEN
   if (screen === "thankyou") {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          backgroundColor={COLORS.red}
-          barStyle="light-content"
+      <SafeAreaView style={styles.splash}>
+        <Text style={styles.thankyouTitle}>Thank You!</Text>
+        <Text style={styles.splashSubtitle}>
+          Your order has been placed successfully.
+        </Text>
+
+        <Text style={styles.totalText}>
+          Order Total: {money(orderTotal)}
+        </Text>
+
+        <ActionButton
+          title="BACK TO MENU"
+          color={COLORS.green}
+          onPress={() => {
+            setOrder([]);
+            setScreen("menu");
+          }}
         />
-
-        <View style={styles.thankYouContainer}>
-          <Text style={styles.messageTitle}>Message</Text>
-
-          <Text style={styles.thankYouText}>
-            THANK FOR YOUR
-          </Text>
-
-          <Text style={styles.thankYouText}>
-            PATRONAGE
-          </Text>
-
-          <Pressable
-            style={styles.orderButton}
-            onPress={() => setScreen("menu")}
-          >
-            <Text style={styles.buttonText}>
-              ORDER NO:582
-            </Text>
-          </Pressable>
-        </View>
       </SafeAreaView>
     );
   }
 
-  return null;
-}
-
-/*
-================================================================
-REUSABLE MENU COMPONENT
-================================================================
-*/
-
-function MenuCourse({
-  image,
-  title,
-  color,
-  onPress,
-}: {
-  image: string;
-  title: string;
-  color: string;
-  onPress: () => void;
-}) {
-  return (
-    <View style={styles.menuCourse}>
-      <Image source={{ uri: image }} style={styles.menuImage} />
-
-      <Pressable
-        style={[styles.courseButton, { backgroundColor: color }]}
-        onPress={onPress}
-      >
-        <Text style={styles.buttonText}>{title}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-/*
-================================================================
-DISH SCREEN
-================================================================
-*/
-
-function DishScreen({
-  title,
-  color,
-  dishes,
-  onNext,
-  onBack,
-}: {
-  title: string;
-  color: string;
-  dishes: Dish[];
-  onNext: () => void;
-  onBack: () => void;
-}) {
+  // MAIN MENU SCREEN
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar
-        backgroundColor={COLORS.red}
-        barStyle="light-content"
-      />
+      <StatusBar backgroundColor={COLORS.red} barStyle="light-content" />
 
-      <View style={styles.dishScreen}>
-        <Text style={styles.pageTitle}>{title}</Text>
-
-        <ScrollView
-          contentContainerStyle={styles.dishScroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {dishes.map((dish) => (
-            <View style={styles.dishCard} key={dish.id}>
-              <Image
-                source={{ uri: dish.image }}
-                style={styles.dishImage}
-              />
-
-              <Text style={styles.dishName}>{dish.name}</Text>
-
-              <Text style={styles.dishDescription}>
-                {dish.description}
-              </Text>
-
-              <Text style={styles.dishPrice}>
-                ${dish.price.toFixed(2)}
-              </Text>
-
-              <Pressable
-                style={[styles.courseButton, { backgroundColor: color }]}
-                onPress={() => {
-                  Alert.alert(
-                    "Added",
-                    `${dish.name} added to your order.`
-                  );
-                }}
-              >
-                <Text style={styles.buttonText}>ADD TO ORDER</Text>
-              </Pressable>
-            </View>
-          ))}
-
-          <View style={styles.navigationRow}>
-            <Pressable
-              style={styles.smallButton}
-              onPress={onBack}
-            >
-              <Text style={styles.buttonText}>BACK</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.smallButton}
-              onPress={onNext}
-            >
-              <Text style={styles.buttonText}>NEXT</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>CHEF'S KITCHEN</Text>
+        <Text style={styles.welcome}>Welcome, {username}!</Text>
       </View>
+
+      <ScrollView contentContainerStyle={styles.menuContainer}>
+        <Text style={styles.heading}>Dish Management</Text>
+
+        {/* STATISTICS */}
+        <View style={styles.statsContainer}>
+          <View style={[styles.statCard, { backgroundColor: COLORS.red }]}>
+            <Text style={styles.statNumber}>{totalItems}</Text>
+            <Text style={styles.statLabel}>Total Items</Text>
+          </View>
+
+          <View style={[styles.statCard, { backgroundColor: COLORS.blue }]}>
+            <Text style={styles.statNumber}>
+              {money(totalMenuPrice)}
+            </Text>
+            <Text style={styles.statLabel}>Total Price</Text>
+          </View>
+
+          <View
+            style={[styles.statCard, { backgroundColor: COLORS.green }]}
+          >
+            <Text style={styles.statNumber}>
+              {money(averagePrice)}
+            </Text>
+            <Text style={styles.statLabel}>Average Price</Text>
+          </View>
+        </View>
+
+        {/* SEARCH */}
+        <TextInput
+          style={styles.input}
+          placeholder="Search dishes by name or description..."
+          value={search}
+          onChangeText={setSearch}
+        />
+
+        {/* COURSE FILTER */}
+        <Text style={styles.label}>Filter by Course</Text>
+
+        <View style={styles.filterContainer}>
+          {(["All", "Starter", "Mains", "Dessert"] as Filter[]).map(
+            (item) => (
+              <Pressable
+                key={item}
+                onPress={() => setFilter(item)}
+                style={[
+                  styles.filterButton,
+                  filter === item && styles.activeFilter,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    filter === item && styles.activeFilterText,
+                  ]}
+                >
+                  {item}
+                </Text>
+              </Pressable>
+            )
+          )}
+        </View>
+
+        {/* ADD DISH */}
+        <ActionButton title="+ ADD NEW DISH" onPress={openAddForm} />
+
+        <Text style={styles.sectionTitle}>
+          Available Dishes ({filteredDishes.length})
+        </Text>
+
+        {/* DISH LIST */}
+        {filteredDishes.length === 0 ? (
+          <Text style={styles.emptyText}>
+            No dishes found. Try another search or filter.
+          </Text>
+        ) : (
+          filteredDishes.map((dish) => {
+            const isSelected = order.includes(dish.id);
+
+            return (
+              <View key={dish.id} style={styles.dishCard}>
+                <Image
+                  source={{ uri: dish.image }}
+                  style={styles.dishImage}
+                />
+
+                <View style={styles.dishDetails}>
+                  <Text style={styles.dishName}>{dish.name}</Text>
+
+                  <Text style={styles.description}>
+                    {dish.description}
+                  </Text>
+
+                  <Text style={styles.courseText}>
+                    Course: {dish.course}
+                  </Text>
+
+                  <Text style={styles.price}>
+                    {money(dish.price)}
+                  </Text>
+
+                  <View style={styles.actionRow}>
+                    <Pressable
+                      style={[styles.smallButton, { backgroundColor: COLORS.blue }]}
+                      onPress={() => openEditForm(dish)}
+                    >
+                      <Text style={styles.smallButtonText}>EDIT</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.smallButton, { backgroundColor: COLORS.red }]}
+                      onPress={() => removeDish(dish.id)}
+                    >
+                      <Text style={styles.smallButtonText}>REMOVE</Text>
+                    </Pressable>
+                  </View>
+
+                  <Pressable
+                    style={[
+                      styles.orderButton,
+                      {
+                        backgroundColor: isSelected
+                          ? COLORS.gray
+                          : COLORS.green,
+                      },
+                    ]}
+                    onPress={() => toggleOrder(dish.id)}
+                  >
+                    <Text style={styles.smallButtonText}>
+                      {isSelected ? "REMOVE FROM ORDER" : "ADD TO ORDER"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            );
+          })
+        )}
+
+        {/* MENU SUMMARY */}
+        <View style={styles.summaryBox}>
+          <Text style={styles.summaryTitle}>Menu Summary</Text>
+          <Text style={styles.summaryText}>
+            Total dishes: {totalItems}
+          </Text>
+          <Text style={styles.summaryText}>
+            Total menu value: {money(totalMenuPrice)}
+          </Text>
+          <Text style={styles.summaryText}>
+            Average dish price: {money(averagePrice)}
+          </Text>
+          <Text style={styles.summaryText}>
+            Selected order items: {orderedDishes.length}
+          </Text>
+        </View>
+
+        <ActionButton
+          title={`CHECKOUT (${order.length})`}
+          color={COLORS.turquoise}
+          onPress={() => setScreen("checkout")}
+        />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-/*
-================================================================
-NEXT BUTTON
-================================================================
-*/
-
-function NextButton({
-  onPress,
-  label = "NEXT",
-}: {
-  onPress: () => void;
-  label?: string;
-}) {
-  return (
-    <Pressable style={styles.nextButton} onPress={onPress}>
-      <Text style={styles.nextButtonText}>▶ {label}</Text>
-    </Pressable>
-  );
-}
-
-/*
-================================================================
-COURSE OPTION
-================================================================
-*/
-
-function CourseOption({
-  title,
-  color,
-  selected,
-  onPress,
-}: {
-  title: string;
-  color: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.courseOption,
-        {
-          backgroundColor: selected ? color : "#C90003",
-          borderWidth: selected ? 3 : 0,
-          borderColor: COLORS.white,
-        },
-      ]}
-    >
-      <Text style={styles.courseOptionText}>{title}</Text>
-    </Pressable>
-  );
-}
-
-/*
-================================================================
-STYLES
-================================================================
-*/
-
+// STYLES
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.red,
+    backgroundColor: COLORS.light,
   },
 
-  /*
-    Splash
-  */
-
-  splashContainer: {
+  splash: {
     flex: 1,
+    backgroundColor: COLORS.red,
     alignItems: "center",
     justifyContent: "center",
-    padding: 30,
+    padding: 20,
   },
 
-  chefImageWrapper: {
-    width: 180,
-    height: 180,
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: "#DDD",
-    marginBottom: 30,
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 25,
   },
 
   chefImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-
-  appTitle: {
-    color: COLORS.black,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    fontSize: 22,
-    fontWeight: "800",
-  },
-
-  loadingText: {
-    marginTop: 25,
-    color: COLORS.white,
-    fontSize: 16,
-  },
-
-  /*
-    Login
-  */
-
-  loginContainer: {
-    flex: 1,
-    alignItems: "center",
-    paddingTop: 70,
-  },
-
-  loginTitle: {
-    fontSize: 36,
-    fontWeight: "900",
-    color: COLORS.white,
-    marginBottom: 10,
-  },
-
-  loginSubtitle: {
-    color: COLORS.white,
-    fontSize: 17,
-    marginBottom: 50,
-  },
-
-  button: {
-    width: 150,
-    height: 50,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 4,
-  },
-
-  yellowButton: {
-    backgroundColor: "#FFCC00",
-  },
-
-  blueButton: {
-    backgroundColor: COLORS.blue,
-  },
-
-  emptySpace: {
-    height: 50,
-  },
-
-  buttonText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-
-  nextButton: {
-    backgroundColor: COLORS.blue,
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 9,
-    marginTop: 60,
-  },
-
-  nextButtonText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: "800",
-  },
-
-  /*
-    Main menu
-  */
-
-  menuContainer: {
-    alignItems: "center",
-    paddingVertical: 25,
-  },
-
-  menuCourse: {
-    width: "90%",
-    alignItems: "center",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
     marginBottom: 25,
   },
 
-  menuImage: {
-    width: 180,
-    height: 130,
-    resizeMode: "cover",
+  loginImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    marginBottom: 25,
+  },
+
+  splashTitle: {
+    color: COLORS.white,
+    fontSize: 30,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+
+  splashSubtitle: {
+    color: COLORS.white,
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+
+  loading: {
+    color: COLORS.white,
+    marginTop: 30,
+    fontSize: 16,
+  },
+
+  thankyouTitle: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: COLORS.white,
     marginBottom: 15,
   },
 
-  courseButton: {
-    width: 160,
-    minHeight: 42,
-    borderRadius: 30,
+  header: {
+    backgroundColor: COLORS.red,
+    padding: 20,
     alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
   },
 
-  createDishButton: {
-    backgroundColor: COLORS.darkRed,
-    paddingHorizontal: 25,
-    paddingVertical: 15,
-    borderRadius: 30,
-    marginTop: 10,
+  headerTitle: {
+    fontSize: 23,
+    color: COLORS.white,
+    fontWeight: "bold",
   },
 
-  /*
-    Form
-  */
+  welcome: {
+    color: COLORS.white,
+    marginTop: 5,
+    fontSize: 15,
+  },
+
+  menuContainer: {
+    padding: 15,
+    paddingBottom: 40,
+  },
 
   formContainer: {
     padding: 20,
-    paddingBottom: 50,
+    paddingBottom: 40,
   },
 
-  formTitle: {
+  heading: {
+    fontSize: 23,
+    fontWeight: "bold",
+    color: COLORS.black,
+    marginBottom: 18,
+  },
+
+  subtitle: {
+    color: COLORS.gray,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+
+  statsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 20,
+  },
+
+  statCard: {
+    flex: 1,
+    minWidth: 95,
+    minHeight: 90,
+    borderRadius: 10,
+    padding: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  statNumber: {
     color: COLORS.white,
-    fontSize: 14,
-    fontWeight: "900",
-    marginBottom: 8,
-    marginTop: 18,
+    fontSize: 15,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+
+  statLabel: {
+    color: COLORS.white,
+    fontSize: 12,
+    marginTop: 6,
+    textAlign: "center",
   },
 
   input: {
-    backgroundColor: "#D9080B",
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    color: COLORS.white,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 13,
+    marginBottom: 15,
     fontSize: 15,
+    color: COLORS.black,
   },
 
   descriptionInput: {
@@ -952,232 +806,213 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
 
-  courseOptions: {
+  label: {
+    fontSize: 15,
+    fontWeight: "bold",
+    marginBottom: 8,
+    color: COLORS.black,
+  },
+
+  button: {
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
+  buttonText: {
+    color: COLORS.white,
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+
+  filterContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 7,
+    marginBottom: 15,
   },
 
-  courseOption: {
-    flex: 1,
-    marginHorizontal: 4,
-    minHeight: 50,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
+  filterButton: {
+    borderWidth: 1,
+    borderColor: COLORS.red,
+    paddingVertical: 9,
+    paddingHorizontal: 13,
+    borderRadius: 20,
   },
 
-  courseOptionText: {
+  activeFilter: {
+    backgroundColor: COLORS.red,
+  },
+
+  filterText: {
+    color: COLORS.red,
+    fontWeight: "bold",
+  },
+
+  activeFilterText: {
     color: COLORS.white,
-    fontWeight: "900",
-    fontSize: 11,
   },
 
-  saveButton: {
-    backgroundColor: COLORS.blue,
-    height: 50,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 35,
-  },
-
-  backButton: {
-    backgroundColor: "#C90003",
-    height: 50,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: "bold",
     marginTop: 15,
-  },
-
-  /*
-    Dish pages
-  */
-
-  dishScreen: {
-    flex: 1,
-  },
-
-  pageTitle: {
-    textAlign: "center",
-    color: COLORS.white,
-    fontSize: 26,
-    fontWeight: "900",
-    paddingTop: 20,
-  },
-
-  dishScroll: {
-    alignItems: "center",
-    padding: 20,
-    paddingBottom: 50,
+    marginBottom: 12,
+    color: COLORS.black,
   },
 
   dishCard: {
-    width: "100%",
-    alignItems: "center",
-    backgroundColor: COLORS.red,
-    paddingVertical: 20,
-    marginBottom: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    marginBottom: 15,
+    padding: 12,
+    elevation: 3,
   },
 
   dishImage: {
-    width: 220,
+    width: "100%",
     height: 170,
-    resizeMode: "cover",
-    marginBottom: 15,
+    borderRadius: 9,
+    marginBottom: 10,
+  },
+
+  dishDetails: {
+    padding: 3,
   },
 
   dishName: {
-    color: COLORS.white,
-    fontSize: 21,
-    fontWeight: "900",
-    marginBottom: 7,
-  },
-
-  dishDescription: {
-    color: COLORS.white,
-    textAlign: "center",
-    fontSize: 14,
-    paddingHorizontal: 25,
-    marginBottom: 8,
-  },
-
-  dishPrice: {
-    color: COLORS.white,
     fontSize: 18,
-    fontWeight: "900",
-    marginBottom: 15,
-  },
-
-  navigationRow: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-
-  smallButton: {
-    backgroundColor: COLORS.blue,
-    minWidth: 90,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    alignItems: "center",
-    borderRadius: 25,
-  },
-
-  /*
-    Checkout
-  */
-
-  checkoutContainer: {
-    padding: 25,
-    alignItems: "center",
-  },
-
-  checkoutTitle: {
-    color: COLORS.white,
-    fontSize: 30,
-    fontWeight: "900",
-    marginBottom: 25,
-  },
-
-  orderRow: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#C90003",
-    paddingVertical: 15,
-  },
-
-  orderName: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  orderPrice: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  totalRow: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 25,
-  },
-
-  totalText: {
-    color: COLORS.white,
-    fontSize: 22,
-    fontWeight: "900",
-  },
-
-  removeButton: {
-    backgroundColor: COLORS.blue,
-    borderRadius: 30,
-    width: 160,
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 15,
-  },
-
-  checkoutMessage: {
+    fontWeight: "bold",
     color: COLORS.black,
-    fontSize: 15,
-    fontWeight: "900",
-    marginTop: 40,
-  },
-
-  checkoutProceed: {
-    color: COLORS.black,
-    fontSize: 13,
-    marginTop: 5,
-  },
-
-  payButton: {
-    backgroundColor: COLORS.blue,
-    borderRadius: 30,
-    paddingHorizontal: 25,
-    height: 45,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 100,
-  },
-
-  /*
-    Thank you
-  */
-
-  thankYouContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  messageTitle: {
-    color: COLORS.black,
-    fontWeight: "900",
-    fontSize: 16,
     marginBottom: 5,
   },
 
-  thankYouText: {
-    color: COLORS.black,
-    fontSize: 15,
+  description: {
+    color: COLORS.gray,
+    fontSize: 14,
+    marginBottom: 7,
+  },
+
+  courseText: {
+    color: COLORS.blue,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+
+  price: {
+    color: COLORS.green,
+    fontWeight: "bold",
+    fontSize: 17,
+    marginVertical: 5,
+  },
+
+  actionRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
+  },
+
+  smallButton: {
+    flex: 1,
+    padding: 11,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+
+  smallButtonText: {
+    color: COLORS.white,
+    fontWeight: "bold",
+    fontSize: 12,
   },
 
   orderButton: {
-    position: "absolute",
-    bottom: 50,
-    backgroundColor: COLORS.blue,
-    borderRadius: 30,
-    width: 150,
-    height: 45,
+    padding: 12,
     alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 6,
+    marginTop: 10,
+  },
+
+  courseOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 18,
+  },
+
+  courseButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: COLORS.red,
+    borderRadius: 8,
+  },
+
+  selectedCourse: {
+    backgroundColor: COLORS.red,
+  },
+
+  courseButtonText: {
+    color: COLORS.red,
+    fontWeight: "bold",
+  },
+
+  selectedCourseText: {
+    color: COLORS.white,
+  },
+
+  summaryBox: {
+    backgroundColor: COLORS.white,
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  summaryTitle: {
+    fontSize: 19,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+
+  summaryText: {
+    fontSize: 15,
+    marginBottom: 7,
+    color: COLORS.black,
+  },
+
+  emptyText: {
+    color: COLORS.gray,
+    textAlign: "center",
+    margin: 20,
+    fontSize: 15,
+  },
+
+  checkoutItem: {
+    backgroundColor: COLORS.white,
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+
+  removeText: {
+    color: COLORS.red,
+    fontWeight: "bold",
+    marginTop: 8,
+  },
+
+  totalBox: {
+    backgroundColor: COLORS.light,
+    padding: 15,
+    marginVertical: 15,
+    borderRadius: 8,
+  },
+
+  totalText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: COLORS.white,
+    textAlign: "center",
+    marginVertical: 10,
   },
 });
