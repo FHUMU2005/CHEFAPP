@@ -83,4 +83,8 @@ The updates made to Chef's Kitchen provide several benefits:
 
 The updated Chef's Kitchen application introduces significant improvements compared to the previous version. The application now includes a redesigned splash screen, a welcome and login screen, an improved dashboard, dish statistics, search functionality, course filtering and the ability to add new dishes.
 
-These changes improve the application's appearance, usability and dish management capabilities. Overall, the updated version provides a more organised and user-friendly experience.
+GitHub Link:https://github.com/FHUMU2005/CHEFAPP
+YouTube Link:https://www.youtube.com/watch?v=hLHsDBgIMMw&t=9s
+<img width="1909" height="909" alt="Screenshot 2026-11-06 133307" src="https://github.com/user-attachments/assets/27dadec7-cbe4-4145-86b6-59950a6a5eff" />
+
+
